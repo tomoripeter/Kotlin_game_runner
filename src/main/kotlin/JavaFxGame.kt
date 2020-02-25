@@ -5,13 +5,22 @@ import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.Label
 import javafx.scene.image.Image
+import javafx.scene.input.KeyCode
+import javafx.scene.paint.Paint
 import javafx.scene.text.Font
 import javafx.stage.Stage
 import kotlin.math.abs
+import kotlin.random.Random
 
 
-class JavaFxGame : Application()
-{
+class JavaFxGame : Application() {
+    private val keyboardInputs = ArrayList<String>()
+    private var runnerPosX = 400.0
+    private var runnerPosY = 350.0
+    private var runnerLoopX = 0
+    private var runnerLoopY = 20
+    private var gameOver = true
+
     override fun start(theStage: Stage) {
         val root = Group()
         val scene = Scene(root)
@@ -19,18 +28,16 @@ class JavaFxGame : Application()
         val gc = canvas.graphicsContext2D
         val background = Image("background.jpg")
         val banana = Image("peeledbanana.jpg")
-        var runnerPosX = 400.0
-        var runnerPosY = 350.0
-        var runnerLoopY = 0.0
-        var bananaPosX = 1000.0
+        var bananaPosX = 930.0
         val bananaPosY = 470.0
-        val bananaSpeed = 10.0
+        var bananaSpeed = 0.0
         val runningMan = AnimatedImage(0.07)
         val startNanoTime = System.nanoTime()
-        val keyboardInputs = ArrayList<String>()
         var highscore = 0.0
         val highscoreLabel = Label("Highscore: ${highscore.toInt()} m")
+        val startgameLabel = Label("Press SPACE BAR to start game")
 
+        // add images to animation
         runningMan.images.add(Image("runningman1.jpg"))
         runningMan.images.add(Image("runningman2.jpg"))
         runningMan.images.add(Image("runningman3.jpg"))
@@ -41,11 +48,20 @@ class JavaFxGame : Application()
         theStage.isResizable = false
         root.children.add(canvas)
         root.children.add(highscoreLabel)
+        root.children.add(startgameLabel)
 
+        // set highscorelabel's properties
         highscoreLabel.isVisible = true
         highscoreLabel.relocate(430.0, 0.0)
         highscoreLabel.font = Font("Arial", 20.0)
 
+        // set startgamelabel's properties
+        startgameLabel.isVisible = true
+        startgameLabel.relocate(270.0, 250.0)
+        startgameLabel.font = Font("Arial", 30.0)
+        startgameLabel.textFill = Paint.valueOf("#FF0000")
+
+        // add keyboard events
         scene.setOnKeyReleased { event ->
             if (!keyboardInputs.contains(event.code.toString()))
                 keyboardInputs.add(event.code.toString())
@@ -55,42 +71,37 @@ class JavaFxGame : Application()
             override fun handle(currentNanoTime: Long) {
                 val t = (currentNanoTime - startNanoTime) / 1000000000.0
 
-                if (keyboardInputs.contains("UP")) {
-                    runnerPosY = 250.0 + runnerLoopY;
-                    runnerLoopY += 10
-                    if (runnerLoopY == 100.0) {
-                        runnerLoopY = 0.0;
-                        keyboardInputs.remove("UP")
-                    }
-                }
-                else
-                    runnerPosY = 350.0
-
-                if (keyboardInputs.contains("LEFT"))
-                {
-                    runnerPosX = if (runnerPosX < 0.0) runnerPosX else runnerPosX - 40.0
-                    keyboardInputs.remove("LEFT")
+                // start/restart the game with spacebar
+                if (keyboardInputs.contains(KeyCode.SPACE.toString()) && gameOver) {
+                    gameOver = false
+                    highscore = 0.0
+                    startgameLabel.isVisible = false
+                    keyboardInputs.remove(KeyCode.SPACE.toString())
+                    bananaSpeed = 10.0
                 }
 
-                if (keyboardInputs.contains("RIGHT"))
-                {
-                    runnerPosX = if (runnerPosX > 1000.0) runnerPosX else runnerPosX + 40.0
-                    keyboardInputs.remove("RIGHT")
-                }
+                // calculate the objects' position
+                calculateRunnerPosX()
+                calculateRunnerPosY()
+                bananaPosX = if (bananaPosX - bananaSpeed < 0) 1000.0 else bananaPosX - bananaSpeed
+                // calculate different speed for each banana
+                if (bananaPosX == 1000.0 - bananaSpeed && !gameOver)
+                    bananaSpeed = 5 + Random.nextDouble(0.0, 10.0)
 
-                bananaPosX = if( bananaPosX - bananaSpeed < 0) 1000.0 else bananaPosX - bananaSpeed
-
+                // render the background, runner and banana
                 gc.drawImage(background, 0.0, 0.0)
                 gc.drawImage(runningMan.getAnimatedImage(t), runnerPosX, runnerPosY)
                 gc.drawImage(banana, bananaPosX, bananaPosY)
 
-                if( detectCollision(runnerPosX, runnerPosY, bananaPosX, bananaPosY))
-                {
-                    highscore = 0.0
-                    println("Game over")
+                // game over detection
+                if (detectCollision(runnerPosX, runnerPosY, bananaPosX, bananaPosY)) {
+                    gameOver = true
+                    bananaPosX = 930.0
+                    bananaSpeed = 0.0
+                    startgameLabel.isVisible = true
                 }
-                else
-                {
+                // game is not over yet, increment highscore
+                else if (!gameOver) {
                     highscore += 0.3
                     highscoreLabel.text = "Highscore: ${highscore.toInt()} m"
                 }
@@ -99,13 +110,51 @@ class JavaFxGame : Application()
         theStage.show()
     }
 
-    fun detectCollision(charPosX: Double, charPosY: Double, objPosX: Double, objPosY: Double ) : Boolean {
+    // function that detects if a collision occurred
+    fun detectCollision(charPosX: Double, charPosY: Double, objPosX: Double, objPosY: Double): Boolean {
         var collision = false
         if (abs(objPosX - charPosX) < 30 && abs(objPosY - charPosY) < 130)
             collision = true
         return collision
     }
 
+    // function that calculates runner's Y position
+    fun calculateRunnerPosY() {
+        if (keyboardInputs.contains("UP")) {
+            runnerLoopY--
+            runnerPosY = 350.0 - runnerLoopY * 4
+
+            if (runnerLoopY == 0) {
+                runnerLoopY = 20
+                keyboardInputs.remove("UP")
+            }
+        } else
+            runnerPosY = 350.0
+    }
+
+    // function that calculates the runner's X position
+    fun calculateRunnerPosX() {
+        if (keyboardInputs.contains("LEFT")) {
+            runnerLoopX++
+            runnerPosX = if (runnerPosX < 0.0) runnerPosX else runnerPosX - runnerLoopX
+            if (runnerLoopX == 10) {
+                keyboardInputs.remove("LEFT")
+                runnerLoopX = 0
+            }
+        }
+
+        if (keyboardInputs.contains("RIGHT")) {
+            runnerLoopX++
+            runnerPosX = if (runnerPosX > 1000.0) runnerPosX else runnerPosX + runnerLoopX
+            if (runnerLoopX == 10) {
+                keyboardInputs.remove("RIGHT")
+                runnerLoopX = 0
+            }
+
+        }
+    }
+
+    // start the game
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
