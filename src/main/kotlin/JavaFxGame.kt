@@ -52,7 +52,7 @@ class JavaFxGame : Application() {
 
         // set highscorelabel's properties
         highscoreLabel.isVisible = true
-        highscoreLabel.relocate(430.0, 0.0)
+        highscoreLabel.relocate(420.0, 0.0)
         highscoreLabel.font = Font("Arial", 20.0)
 
         // set startgamelabel's properties
@@ -120,13 +120,13 @@ class JavaFxGame : Application() {
 
     // function that calculates runner's Y position
     fun calculateRunnerPosY() {
-        if (keyboardInputs.contains("UP")) {
+        if (keyboardInputs.contains(KeyCode.UP.toString())) {
             runnerLoopY--
             runnerPosY = 350.0 - runnerLoopY * 4
 
             if (runnerLoopY == 0) {
                 runnerLoopY = 20
-                keyboardInputs.remove("UP")
+                keyboardInputs.remove(KeyCode.UP.toString())
             }
         } else
             runnerPosY = 350.0
@@ -134,31 +134,22 @@ class JavaFxGame : Application() {
 
     // function that calculates the runner's X position
     fun calculateRunnerPosX() {
-        if (keyboardInputs.contains("LEFT")) {
+        if (keyboardInputs.contains(KeyCode.LEFT.toString())) {
             runnerLoopX++
             runnerPosX = if (runnerPosX < 0.0) runnerPosX else runnerPosX - runnerLoopX
             if (runnerLoopX == 10) {
-                keyboardInputs.remove("LEFT")
+                keyboardInputs.remove(KeyCode.LEFT.toString())
                 runnerLoopX = 0
             }
         }
 
-        if (keyboardInputs.contains("RIGHT")) {
+        if (keyboardInputs.contains(KeyCode.RIGHT.toString())) {
             runnerLoopX++
             runnerPosX = if (runnerPosX > 1000.0) runnerPosX else runnerPosX + runnerLoopX
             if (runnerLoopX == 10) {
-                keyboardInputs.remove("RIGHT")
+                keyboardInputs.remove(KeyCode.RIGHT.toString())
                 runnerLoopX = 0
             }
-
-        }
-    }
-
-    // start the game
-    companion object {
-        @JvmStatic
-        fun main(args: Array<String>) {
-            launch(JavaFxGame::class.java)
         }
     }
 }
