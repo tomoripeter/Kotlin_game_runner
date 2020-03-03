@@ -26,6 +26,9 @@ class Game : Application() {
         const val DEFAULT_OBSTACLE_POS_X = 930.0
         const val DEFAULT_OBSTACLE_POS_Y = 470.0
         const val HIGHSCORE_POS_X = 420.0
+        const val BUTTONS_POS_X = 600.0
+        const val BUTTONS_WIDTH = 200.0
+        const val BUTTONS_HEIGHT = 50.0
     }
 
     override fun start(stage: Stage) {
@@ -36,10 +39,14 @@ class Game : Application() {
         val file = File("highscore.txt")
         val startButton = Button("Start game")
         val highscoreButton = Button("Highscores")
+        val retHighscoreButton = Button("Back to menu")
         val background = Image("background.jpg")
+        val top3 = Image("top3.png")
         val startNanoTime = System.nanoTime()
         var highscore = 0.0
         val highscoreLabel = Label("Highscore: ${highscore.toInt()} m")
+        val bestScoreLabel = Label("")
+        var showHighscore = false
 
         // set the screen
         stage.scene = scene
@@ -49,14 +56,19 @@ class Game : Application() {
         root.children.add(highscoreLabel)
         root.children.add(startButton)
         root.children.add(highscoreButton)
+        root.children.add(retHighscoreButton)
+        root.children.add(bestScoreLabel)
 
         // set highscorelabel's properties
         highscoreLabel.isVisible = true
         highscoreLabel.relocate(HIGHSCORE_POS_X, 0.0)
         highscoreLabel.font = Font("Arial", 20.0)
 
+        bestScoreLabel.isVisible = false
+        bestScoreLabel.font = Font("Arial", 20.0)
+
         // set button properties
-        setButtonsStyle(startButton, highscoreButton)
+        setButtonsStyle(startButton, highscoreButton, retHighscoreButton)
 
         // add keyboard events
         scene.setOnKeyReleased { event ->
@@ -74,11 +86,42 @@ class Game : Application() {
         highscoreButton.setOnMouseClicked {
             val readResult = file.bufferedReader().readLines()
             val intResult = ArrayList<Int>()
-            for (result in readResult) {
+            for (result in readResult)
                 intResult.add(result.toInt())
-            }
             intResult.sort()
             intResult.reverse()
+            bestScoreLabel.isVisible = true
+            highscoreButton.isVisible = false
+            startButton.isVisible = false
+            retHighscoreButton.isVisible = true
+            showHighscore = true
+            when (intResult.size)
+            {
+                0 -> {
+                    bestScoreLabel.text = "0 m         0 m         0 m"
+                    bestScoreLabel.relocate(BUTTONS_POS_X + BUTTONS_WIDTH / 2 - 100 , 425.0)
+                }
+                1 -> {
+                    bestScoreLabel.text = "0 m        ${intResult[0]} m       0 m"
+                    bestScoreLabel.relocate(BUTTONS_POS_X + BUTTONS_WIDTH / 2 - 100 , 425.0)
+                }
+                2 -> {
+                    bestScoreLabel.text = "${intResult[1]} m     ${intResult[0]} m      0 m"
+                    bestScoreLabel.relocate(BUTTONS_POS_X + BUTTONS_WIDTH / 2 - 100, 425.0)
+                }
+                else -> {
+                    bestScoreLabel.text = "${intResult[1]} m     ${intResult[0]} m     ${intResult[2]} m"
+                    bestScoreLabel.relocate(BUTTONS_POS_X + BUTTONS_WIDTH / 2 - 100, 425.0)
+                }
+            }
+        }
+
+        retHighscoreButton.setOnMouseClicked {
+            bestScoreLabel.isVisible = false
+            retHighscoreButton.isVisible = false
+            highscoreButton.isVisible = true
+            startButton.isVisible = true
+            showHighscore = false
         }
 
         object : AnimationTimer() {
@@ -91,6 +134,8 @@ class Game : Application() {
                 gc.drawImage(background, 0.0, 0.0)
                 runner.draw(gc, t, gameOver)
                 banana.draw(gc, t, gameOver)
+                if (showHighscore)
+                    gc.drawImage(top3, BUTTONS_POS_X + BUTTONS_WIDTH / 2 - (top3.width) / 2, 300.0)
 
                 // game ended
                 if (detectCollision()) {
@@ -119,9 +164,9 @@ class Game : Application() {
         return collision
     }
 
-    private fun setButtonsStyle(startButton: Button, highscoreButton: Button) {
-        startButton.setMinSize(200.0, 50.0)
-        startButton.relocate(600.0, 350.0)
+    private fun setButtonsStyle(startButton: Button, highscoreButton: Button, retHighscoreButton : Button) {
+        startButton.setMinSize(BUTTONS_WIDTH, BUTTONS_HEIGHT)
+        startButton.relocate(BUTTONS_POS_X, 350.0)
         startButton.style = "-fx-background-color: \n" +
                 "        linear-gradient(#f2f2f2, #d6d6d6),\n" +
                 "        linear-gradient(#fcfcfc 0%, #d9d9d9 20%, #d6d6d6 100%),\n" +
@@ -132,8 +177,8 @@ class Game : Application() {
                 "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );"
 
 
-        highscoreButton.setMinSize(200.0, 50.0)
-        highscoreButton.relocate(600.0, 450.0)
+        highscoreButton.setMinSize(BUTTONS_WIDTH, BUTTONS_HEIGHT)
+        highscoreButton.relocate(BUTTONS_POS_X, 450.0)
         highscoreButton.style = "-fx-background-color: \n" +
                 "        linear-gradient(#f2f2f2, #d6d6d6),\n" +
                 "        linear-gradient(#fcfcfc 0%, #d9d9d9 20%, #d6d6d6 100%),\n" +
@@ -142,5 +187,17 @@ class Game : Application() {
                 "    -fx-background-insets: 0,1,2;\n" +
                 "    -fx-text-fill: black;\n" +
                 "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );"
+
+        retHighscoreButton.setMinSize(BUTTONS_WIDTH, BUTTONS_HEIGHT)
+        retHighscoreButton.relocate(BUTTONS_POS_X, 500.0)
+        retHighscoreButton.style = "-fx-background-color: \n" +
+                "        linear-gradient(#f2f2f2, #d6d6d6),\n" +
+                "        linear-gradient(#fcfcfc 0%, #d9d9d9 20%, #d6d6d6 100%),\n" +
+                "        linear-gradient(#dddddd 0%, #f6f6f6 50%);\n" +
+                "    -fx-background-radius: 8,7,6;\n" +
+                "    -fx-background-insets: 0,1,2;\n" +
+                "    -fx-text-fill: black;\n" +
+                "    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );"
+        retHighscoreButton.isVisible = false
     }
 }
