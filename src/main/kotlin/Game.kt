@@ -8,6 +8,7 @@ import javafx.scene.control.Label
 import javafx.scene.image.Image
 import javafx.scene.text.Font
 import javafx.stage.Stage
+import java.io.File
 import kotlin.math.abs
 
 
@@ -32,6 +33,7 @@ class Game : Application() {
         val scene = Scene(root)
         val canvas = Canvas(WIDTH, HEIGHT)
         val gc = canvas.graphicsContext2D
+        val file = File("highscore.txt")
         val startButton = Button("Start game")
         val highscoreButton = Button("Highscores")
         val background = Image("background.jpg")
@@ -70,7 +72,13 @@ class Game : Application() {
             highscoreButton.isVisible = false
         }
         highscoreButton.setOnMouseClicked {
-            // TODO: handle highscorebutton
+            val readResult = file.bufferedReader().readLines()
+            val intResult = ArrayList<Int>()
+            for (result in readResult) {
+                intResult.add(result.toInt())
+            }
+            intResult.sort()
+            intResult.reverse()
         }
 
         object : AnimationTimer() {
@@ -87,6 +95,7 @@ class Game : Application() {
                 // game ended
                 if (detectCollision()) {
                     gameOver = true
+                    file.appendText(highscore.toInt().toString() + '\n')
                     startButton.isVisible = true
                     highscoreButton.isVisible = true
                     runner = Player(DEFAULT_PLAYER_POS_X, DEFAULT_PLAYER_POS_Y)
