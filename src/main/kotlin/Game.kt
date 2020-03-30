@@ -84,6 +84,9 @@ class Game : Application() {
             highscoreButton.isVisible = false
         }
         highscoreButton.setOnMouseClicked {
+            if (!file.exists()) {
+                file.createNewFile()
+            }
             val readResult = file.bufferedReader().readLines()
             val intResult = ArrayList<Int>()
             for (result in readResult)
@@ -95,8 +98,7 @@ class Game : Application() {
             startButton.isVisible = false
             retHighscoreButton.isVisible = true
             showHighscore = true
-            when (intResult.size)
-            {
+            when (intResult.size) {
                 0 -> {
                     bestScoreLabel.text = "0 m         0 m         0 m"
                     bestScoreLabel.relocate(BUTTONS_POS_X + BUTTONS_WIDTH / 2 - 100 , 425.0)
@@ -140,6 +142,8 @@ class Game : Application() {
                 // game ended
                 if (detectCollision()) {
                     gameOver = true
+                    if (!file.exists())
+                        file.createNewFile()
                     file.appendText(highscore.toInt().toString() + '\n')
                     startButton.isVisible = true
                     highscoreButton.isVisible = true
